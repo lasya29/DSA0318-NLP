@@ -1,19 +1,44 @@
-import nltk
+import re
 
-# Download the necessary NLTK data files
-nltk.download('punkt')  # For tokenization
-nltk.download('averaged_perceptron_tagger')  # For POS tagging
+# Define the regex rules for each POS tag
+rules = [
+    (r'\bthe\b|\ba\b|\ban\b', 'DET'),  # Determiners
+    (r'\b\w+ing\b|\b\w+ed\b|\bsleeps\b|\bbarks\b|\beats\b', 'VERB'),  # Verbs
+    (r'\b\w+ly\b', 'ADV'),  # Adverbs
+    (r'\b\w+y\b|\b\w+ive\b', 'ADJ'),  # Adjectives
+    (r'\b\w+s\b|\bdog\b|\bcat\b|\bfox\b', 'NOUN'),  # Nouns
+]
 
-# Sample text
-text = "The quick brown fox jumps over the lazy dog."
+def tag_sentence(sentence):
+    words = sentence.split()
+    tagged_sentence = []
 
-# Tokenize the text into words
-words = nltk.word_tokenize(text)
+    for word in words:
+        tagged = False
+        for pattern, tag in rules:
+            if re.fullmatch(pattern, word):
+                tagged_sentence.append((word, tag))
+                tagged = True
+                break
+        if not tagged:
+            tagged_sentence.append((word, 'UNKNOWN'))
 
-# Perform part-of-speech tagging
-pos_tags = nltk.pos_tag(words)
+    return tagged_sentence
 
-# Print the POS tags
-print("Part-of-Speech Tags:")
-for word, tag in pos_tags:
-    print(f"{word}: {tag}")
+def main():
+    # Example sentences to tag
+    sentences = [
+        "the quick brown fox jumps over the lazy dog",
+        "a cat sleeps",
+        "the dog barks loudly",
+        "an active dog is happily running"
+    ]
+
+    for sentence in sentences:
+        tagged = tag_sentence(sentence)
+        print(f"Sentence: {sentence}")
+        print("Tagged: ", tagged)
+        print()
+
+if __name__ == "__main__":
+    main()
