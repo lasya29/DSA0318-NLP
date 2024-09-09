@@ -1,0 +1,57 @@
+import spacy
+from gensim.models import KeyedVectors
+from gensim.similarities import WmdSimilarity
+
+# Load spaCy's medium-sized model for English that includes word vectors
+nlp = spacy.load('en_core_web_md')
+
+def preprocess(text):
+    # Use spaCy to process the text and remove stop words and punctuation
+    doc = nlp(text)
+    return [token.text for token in doc if not token.is_stop and not token.is_punct]
+
+def calculate_coherence(sentences):
+    # Preprocess sentences
+    preprocessed_sentences = [preprocess(sentence) for sentence in sentences]
+
+    # Load pre-trained Word2Vec vectors from spaCy's vocabulary
+    wv = KeyedVectors(vector_size=300)
+    wv.add_vectors(list(nlp.vocab.strings), nlp.vocab.vectors.data)
+
+    # Initialize the WMD similarity instance
+    instance = WmdSimilarity(preprocessed_sentences, wv, num_best=10)
+
+    # Calculate coherence scores between consecutive sentences
+    coherence_scores = []
+    for i in range(len(preprocessed_sentences) - 1):
+        # Calculate the similarity score between consecutive sentences
+        sim_score = instance.wmdistance(preprocessed_sentences[i], preprocessed_sentences[i + 1])
+        coherence_scores.append(sim_score)
+
+    # Return the average coherence score (lower score indicates higher coherence)
+    avg_coherence = sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0
+    return avg_coherence
+
+def evaluate_coherence(text):
+    # Split the text into sentences using spaCy
+    doc = nlp(text)
+    sentences = [sent.text.strip() for sent in doc.sents]
+
+    # Calculate coherence score
+    coherence_score = calculate_coherence(sentences)
+
+    print(f"Coherence Score: {coherence_score:.4f}")
+    if coherence_score < 1:
+        print("The text is highly coherent.")
+    elif coherence_score < 2:
+        print("The text is moderately coherent.")
+    else:
+        print("The text has low coherence.")
+
+# Example usage
+text = """
+John went to the store to buy some groceries. He realized he forgot his wallet at home.
+However, he decided to take a walk and enjoy the sunny weather. Later, he returned to the store and bought what he needed.
+"""
+
+evaluate_coherence(text)
