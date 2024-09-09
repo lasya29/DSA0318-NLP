@@ -1,0 +1,41 @@
+import spacy
+
+# Load spaCy's English model
+nlp = spacy.load('en_core_web_sm')
+
+# Define simple rules for recognizing dialog acts
+def recognize_dialog_act(utterance):
+    doc = nlp(utterance.lower())
+    if any(token.text in ['hi', 'hello', 'hey'] for token in doc):
+        return 'Greeting'
+    elif doc[-1].text == '?' or any(token.tag_ == 'WP' for token in doc):
+        return 'Question'
+    elif any(token.text in ['please', 'could', 'would', 'can'] for token in doc):
+        return 'Request'
+    elif any(token.dep_ == 'neg' for token in doc):
+        return 'Negation'
+    elif any(token.text in ['thanks', 'thank you'] for token in doc):
+        return 'Thanking'
+    else:
+        return 'Statement'
+
+# Function to analyze a conversation and recognize dialog acts
+def analyze_conversation(conversation):
+    print("Recognized Dialog Acts:")
+    for utterance in conversation:
+        dialog_act = recognize_dialog_act(utterance)
+        print(f"'{utterance}': {dialog_act}")
+
+# Example conversation
+conversation = [
+    "Hi, how are you?",
+    "I am fine, thank you.",
+    "Can you help me with my homework?",
+    "Sure, what do you need help with?",
+    "I need help with math.",
+    "Okay, let's start with the basics.",
+    "Thanks a lot!",
+    "You're welcome."
+]
+
+analyze_conversation(conversation)
