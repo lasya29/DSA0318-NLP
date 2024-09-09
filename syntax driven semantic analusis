@@ -1,0 +1,26 @@
+import nltk
+from nltk import pos_tag, ne_chunk
+from nltk.tokenize import word_tokenize
+from nltk.chunk import RegexpParser
+from nltk.corpus import wordnet as wn
+
+# Function to extract meanings using WordNet
+def get_meaning(word):
+    synsets = wn.synsets(word)
+    if synsets:
+        # Return the definition of the first sense
+        return synsets[0].definition()
+    return "No definition found."
+
+# Function to extract noun phrases
+def extract_noun_phrases(sentence):
+    # Tokenize the sentence into words
+    tokens = word_tokenize(sentence)
+    
+    # Perform part-of-speech tagging
+    pos_tags = pos_tag(tokens)
+    
+    # Define a grammar for noun phrase extraction
+    grammar = "NP: {<DT>?<JJ>*<NN.*>+}"
+    
+    # Create a chunk parser using the defined grammar
