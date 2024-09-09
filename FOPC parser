@@ -1,0 +1,76 @@
+import re
+
+class FOPCParser:
+    def __init__(self):
+        self.variable_pattern = r'[a-z]'
+        self.predicate_pattern = r'[A-Z][a-zA-Z]*'
+        self.expression_pattern = r'^\s*(\forall|\exists)\s*(\w+)\s*[(]([^)]+)[)]\s*$'
+        
+    def parse_expression(self, expression):
+        match = re.match(self.expression_pattern, expression)
+        if match:
+            quantifier = match.group(1)
+            variable = match.group(2)
+            predicate_expr = match.group(3).strip()
+            return quantifier, variable, predicate_expr
+        else:
+            raise ValueError("Invalid expression format")
+    
+    def evaluate_expression(self, expression, domain):
+        quantifier, variable, predicate_expr = self.parse_expression(expression)
+        
+        if quantifier == 'forall':
+            return all(self.evaluate_predicate(predicate_expr, {variable: value}) for value in domain)
+        elif quantifier == 'exists':
+            return any(self.evaluate_predicate(predicate_expr, {variable: value}) for value in domain)
+        else:
+            raise ValueError("Unknown quantifier")
+    
+    def evaluate_predicate(self, predicate_expr, variable_map):
+        predicate_parts = predicate_expr.split('(')
+        predicate_name = predicate_parts[0].strip()
+        arguments_str = predicate_parts[1][:-1].strip()  # Remove the closing parenthesis
+        
+        arguments = arguments_str.split(',')
+        arguments = [arg.strip() for arg in arguments]
+        
+        if len(arguments) != len(variable_map):
+            raise ValueError("Number of arguments does not match variable map")
+        
+        substitution = {}
+        for i, arg in enumerate(arguments):
+            if re.match(self.variable_pattern, arg):
+                if arg in variable_map:
+                    substitution[arg] = variable_map[arg]
+                else:
+                    raise ValueError(f"Variable {arg} not found in variable map")
+            else:
+                substitution[arg] = arg  # Constant
+        
+        # Evaluate the predicate with substitutions
+        return self.evaluate_predicate_with_substitution(predicate_name, substitution)
+    
+    def evaluate_predicate_with_substitution(self, predicate_name, substitution):
+        # Dummy function for predicate evaluation; replace with actual predicate evaluation logic
+        # This can involve querying a database or applying rules specific to your domain
+        if predicate_name == 'P':
+            # Example: P(x, y) where P is a predicate
+            return substitution['x'] == substitution['y'] + 1
+        else:
+            raise ValueError(f"Unknown predicate '{predicate_name}'")
+        
+
+if __name__ == "__main__":
+    parser = FOPCParser()
+    
+    # Example 1: forall x (P(x, x))
+    expression1 = "forall x (P(x, x))"
+    domain1 = [1, 2, 3, 4, 5]
+    result1 = parser.evaluate_expression(expression1, domain1)
+    print(f"Evaluation of '{expression1}' with domain {domain1}: {result1}")
+    
+    # Example 2: exists y (P(y, y))
+    expression2 = "exists y (P(y, y))"
+    domain2 = [1, 2, 3, 4, 5]
+    result2 = parser.evaluate_expression(expression2, domain2)
+    print(f"Evaluation of '{expression2}' with domain {domain2}: {result2}")
