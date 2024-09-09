@@ -1,0 +1,22 @@
+import spacy
+
+def perform_ner(text):
+    # Load the language model for English
+    nlp = spacy.load('en_core_web_sm')
+    
+    # Process the text with spaCy NLP pipeline
+    doc = nlp(text)
+    
+    # Iterate through entities identified by spaCy
+    for ent in doc.ents:
+        print(f"Entity: {ent.text}, Label: {ent.label_}")
+
+if __name__ == "__main__":
+    # Example text
+    text = """
+    Apple Inc. is an American multinational technology company headquartered in Cupertino, California. 
+    It was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in April 1976.
+    """
+    
+    # Perform NER on the example text
+    perform_ner(text)
