@@ -1,0 +1,131 @@
+import re
+from collections import defaultdict, namedtuple
+
+# Define a token
+Token = namedtuple('Token', ['type', 'value'])
+
+# Token specification
+token_specification = [
+    ('DET', r'\b(the|a)\b'),
+    ('NOUN', r'\b(dog|cat)\b'),
+    ('VERB', r'\b(sees|barks)\b'),
+    ('SPACE', r'\s+'),
+]
+
+def tokenize(sentence):
+    tokens = []
+    while sentence:
+        matched = False
+        for token_type, pattern in token_specification:
+            regex = re.compile(pattern)
+            match = regex.match(sentence)
+            if match:
+                if token_type != 'SPACE':
+                    tokens.append(Token(token_type, match.group(0)))
+                sentence = sentence[match.end():]
+                matched = True
+                break
+        if not matched:
+            raise ValueError(f"Unexpected character: {sentence[0]}")
+    return tokens
+
+# Probabilistic context-free grammar
+class PCFG:
+    def __init__(self):
+        self.rules = defaultdict(list)
+        self.probabilities = {}
+
+    def add_rule(self, lhs, rhs, prob):
+        self.rules[lhs].append(rhs)
+        self.probabilities[(lhs, tuple(rhs))] = prob
+
+    def get_rules(self, lhs):
+        return self.rules[lhs]
+
+    def get_probability(self, lhs, rhs):
+        return self.probabilities[(lhs, tuple(rhs))]
+
+# CKY Parser for PCFG
+class CKYParser:
+    def __init__(self, grammar):
+        self.grammar = grammar
+
+    def parse(self, tokens):
+        n = len(tokens)
+        table = [[defaultdict(float) for _ in range(n + 1)] for _ in range(n + 1)]
+        back = [[defaultdict(tuple) for _ in range(n + 1)] for _ in range(n + 1)]
+
+        for j in range(1, n + 1):
+            token = tokens[j - 1]
+            for lhs in self.grammar.rules:
+                for rhs in self.grammar.get_rules(lhs):
+                    if len(rhs) == 1 and rhs[0] == token.type:
+                        table[j - 1][j][lhs] = self.grammar.get_probability(lhs, rhs)
+                        back[j - 1][j][lhs] = (token,)
+
+            for i in range(j - 2, -1, -1):
+                for k in range(i + 1, j):
+                    for lhs in self.grammar.rules:
+                        for rhs in self.grammar.get_rules(lhs):
+                            if len(rhs) == 2:
+                                B, C = rhs
+                                if table[i][k][B] > 0 and table[k][j][C] > 0:
+                                    prob = self.grammar.get_probability(lhs, rhs) * table[i][k][B] * table[k][j][C]
+                                    if prob > table[i][j][lhs]:
+                                        table[i][j][lhs] = prob
+                                        back[i][j][lhs] = (B, C, i, k, j)
+
+        if 'S' in table[0][n]:
+            return self.build_tree(back, tokens, 0, n, 'S')
+        else:
+            return None
+
+    def build_tree(self, back, tokens, i, j, symbol):
+        if symbol in back[i][j]:
+            if len(back[i][j][symbol]) == 1:
+                return (symbol, back[i][j][symbol][0].value)
+            else:
+                B, C, i, k, j = back[i][j][symbol]
+                return (symbol, self.build_tree(back, tokens, i, k, B), self.build_tree(back, tokens, k, j, C))
+        else:
+            return None
+
+# Main function
+def main():
+    # Define the grammar
+    grammar = PCFG()
+    grammar.add_rule('S', ['NP', 'VP'], 1.0)
+    grammar.add_rule('NP', ['DET', 'NOUN'], 0.5)
+    grammar.add_rule('NP', ['NOUN'], 0.5)
+    grammar.add_rule('VP', ['VERB', 'NP'], 0.5)
+    grammar.add_rule('VP', ['VERB'], 0.5)
+    grammar.add_rule('DET', ['the'], 0.5)
+    grammar.add_rule('DET', ['a'], 0.5)
+    grammar.add_rule('NOUN', ['dog'], 0.5)
+    grammar.add_rule('NOUN', ['cat'], 0.5)
+    grammar.add_rule('VERB', ['sees'], 0.5)
+    grammar.add_rule('VERB', ['barks'], 0.5)
+
+    # Example sentences
+    sentences = [
+        "the dog sees a cat",
+        "a cat barks",
+        "dog sees the cat",
+    ]
+
+    parser = CKYParser(grammar)
+
+    for sentence in sentences:
+        print(f"Sentence: {sentence}")
+        tokens = tokenize(sentence)
+        print(f"Tokens: {tokens}")
+
+        parse_tree = parser.parse(tokens)
+        if parse_tree:
+            print(f"Parse Tree: {parse_tree}")
+        else:
+            print("Parsing failed.")
+        print()
+
+if __name__ == "__main__":
+    main()
