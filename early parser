@@ -1,0 +1,173 @@
+class Grammar:
+    def __init__(self, rules):
+        self.rules = rules
+        self.non_terminals = set()
+        self.start_symbol = None
+        self._populate_non_terminals()
+
+    def _populate_non_terminals(self):
+        for lhs, rhs_list in self.rules.items():
+            self.non_terminals.add(lhs)
+            if not self.start_symbol:
+                self.start_symbol = lhs
+class State:
+    def __init__(self, rule, dot, start, end):
+        self.rule = rule
+        self.dot = dot
+        self.start = start
+        self.end = end
+
+    def __eq__(self, other):
+        return (self.rule == other.rule and self.dot == other.dot and
+                self.start == other.start and self.end == other.end)
+
+    def __hash__(self):
+        return hash((self.rule, self.dot, self.start, self.end))
+
+    def __repr__(self):
+        lhs, rhs = self.rule
+        return f'{lhs} -> {" ".join(rhs[:self.dot])} . {" ".join(rhs[self.dot:])} [{self.start}, {self.end}]'
+class EarleyParser:
+    def __init__(self, grammar):
+        self.grammar = grammar
+        self.chart = []
+
+    def parse(self, tokens):
+        self.chart = [[] for _ in range(len(tokens) + 1)]
+        start_state = State((self.grammar.start_symbol, ['E']), 0, 0, 0)
+        self.chart[0].append(start_state)
+
+        for i in range(len(tokens) + 1):
+            for state in self.chart[i]:
+                if not self._is_complete(state):
+                    next_symbol = self._next_symbol(state)
+                    if self._is_non_terminal(next_symbol):
+                        self._predictor(state, i)
+                    else:
+                        self._scanner(state, i, tokens)
+                else:
+                    self._completer(state, i)
+
+        for state in self.chart[len(tokens)]:
+            if (state.rule[0] == self.grammar.start_symbol and
+                    self._is_complete(state) and state.start == 0):
+                return True
+        return False
+
+    def _is_complete(self, state):
+        return state.dot >= len(state.rule[1])
+
+    def _next_symbol(self, state):
+        return state.rule[1][state.dot] if not self._is_complete(state) else None
+
+    def _is_non_terminal(self, symbol):
+        return symbol in self.grammar.non_terminals
+
+    def _predictor(self, state, chart_index):
+        non_terminal = self._next_symbol(state)
+        for rule in self.grammar.rules[non_terminal]:
+            new_state = State((non_terminal, rule), 0, chart_index, chart_index)
+            if new_state not in self.chart[chart_index]:
+                self.chart[chart_index].append(new_state)
+
+    def _scanner(self, state, chart_index, tokens):
+        next_symbol = self._next_symbol(state)
+        if chart_index < len(tokens) and next_symbol == tokens[chart_index]:
+            new_state = State(state.rule, state.dot + 1, state.start, chart_index + 1)
+            if new_state not in self.chart[chart_index + 1]:
+                self.chart[chart_index + 1].append(new_state)
+
+    def _completer(self, state, chart_index):
+        for prev_state in self.chart[state.start]:
+            if self._next_symbol(prev_state) == state.rule[0]:
+                new_state = State(prev_state.rule, prev_state.dot + 1, prev_state.start, chart_index)
+                if new_state not in self.chart[chart_index]:
+                    self.chart[chart_index].append(new_state)
+class EarleyParser:
+    def __init__(self, grammar):
+        self.grammar = grammar
+        self.chart = []
+
+    def parse(self, tokens):
+        self.chart = [[] for _ in range(len(tokens) + 1)]
+        start_state = State((self.grammar.start_symbol, ['E']), 0, 0, 0)
+        self.chart[0].append(start_state)
+
+        for i in range(len(tokens) + 1):
+            for state in self.chart[i]:
+                if not self._is_complete(state):
+                    next_symbol = self._next_symbol(state)
+                    if self._is_non_terminal(next_symbol):
+                        self._predictor(state, i)
+                    else:
+                        self._scanner(state, i, tokens)
+                else:
+                    self._completer(state, i)
+
+        for state in self.chart[len(tokens)]:
+            if (state.rule[0] == self.grammar.start_symbol and
+                    self._is_complete(state) and state.start == 0):
+                return True
+        return False
+
+    def _is_complete(self, state):
+        return state.dot >= len(state.rule[1])
+
+    def _next_symbol(self, state):
+        return state.rule[1][state.dot] if not self._is_complete(state) else None
+
+    def _is_non_terminal(self, symbol):
+        return symbol in self.grammar.non_terminals
+
+    def _predictor(self, state, chart_index):
+        non_terminal = self._next_symbol(state)
+        for rule in self.grammar.rules[non_terminal]:
+            new_state = State((non_terminal, rule), 0, chart_index, chart_index)
+            if new_state not in self.chart[chart_index]:
+                self.chart[chart_index].append(new_state)
+
+    def _scanner(self, state, chart_index, tokens):
+        next_symbol = self._next_symbol(state)
+        if chart_index < len(tokens) and next_symbol == tokens[chart_index]:
+            new_state = State(state.rule, state.dot + 1, state.start, chart_index + 1)
+            if new_state not in self.chart[chart_index + 1]:
+                self.chart[chart_index + 1].append(new_state)
+
+    def _completer(self, state, chart_index):
+        for prev_state in self.chart[state.start]:
+            if self._next_symbol(prev_state) == state.rule[0]:
+                new_state = State(prev_state.rule, prev_state.dot + 1, prev_state.start, chart_index)
+                if new_state not in self.chart[chart_index]:
+                    self.chart[chart_index].append(new_state)
+def main():
+    # Define the grammar
+    rules = {
+        'S': [['E']],
+        'E': [['E', '+', 'T'], ['T']],
+        'T': [['T', '*', 'F'], ['F']],
+        'F': [['(', 'E', ')'], ['id']]
+    }
+    grammar = Grammar(rules)
+
+    # Create an Earley parser
+    parser = EarleyParser(grammar)
+
+    # Example input strings
+    input_strings = [
+        ['id', '+', 'id', '*', 'id'],
+        ['(', 'id', ')', '+', 'id'],
+        ['id', '*', '(', 'id', '+', 'id', ')'],
+        ['(', 'id', '+', 'id', ')', '*', 'id'],
+        ['id', '+', 'id', '+', 'id']
+    ]
+
+    for input_string in input_strings:
+        print(f'Input: {" ".join(input_string)}')
+        if parser.parse(input_string):
+            print('Parsing succeeded.')
+        else:
+            print('Parsing failed.')
+        print()
+
+if __name__ == "__main__":
+    main()
