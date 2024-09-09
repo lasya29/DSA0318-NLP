@@ -1,0 +1,48 @@
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+
+# Define a collection of documents
+documents = [
+    "The quick brown fox jumps over the lazy dog.",
+    "Never jump over the lazy dog quickly.",
+    "A fox is a wild animal.",
+    "The dog is a domesticated animal.",
+    "Foxes are wild animals and dogs are domestic animals."
+]
+
+# Step 1: Create a TF-IDF Vectorizer
+vectorizer = TfidfVectorizer()
+
+# Step 2: Fit the vectorizer on the documents and transform them into TF-IDF matrix
+tfidf_matrix = vectorizer.fit_transform(documents)
+
+# Display the feature names (terms)
+print("Terms:", vectorizer.get_feature_names_out())
+
+# Convert the TF-IDF matrix to a dense format and display it
+tfidf_dense = tfidf_matrix.todense()
+print("\nTF-IDF Matrix:\n", tfidf_dense)
+
+# Step 3: Function to rank documents based on a query
+def rank_documents(query, tfidf_matrix, vectorizer):
+    # Transform the query to the same TF-IDF space
+    query_vec = vectorizer.transform([query])
+    
+    # Compute cosine similarity between query and each document
+    cosine_similarities = (tfidf_matrix @ query_vec.T).toarray().flatten()
+    
+    # Rank the documents in descending order of similarity
+    ranked_doc_indices = np.argsort(-cosine_similarities)
+    
+    return ranked_doc_indices, cosine_similarities
+
+# Example query
+query = "wild fox"
+
+# Rank the documents for the given query
+ranked_indices, similarities = rank_documents(query, tfidf_matrix, vectorizer)
+
+# Display the ranked documents and their scores
+print("\nRanked Documents for Query '{}':".format(query))
+for idx in ranked_indices:
+    print(f"Document {idx+1}: {documents[idx]} (Score: {similarities[idx]:.4f})")
