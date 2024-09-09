@@ -1,0 +1,114 @@
+import re
+
+# Token types
+TOKEN_ID = 'ID'
+TOKEN_PLUS = 'PLUS'
+TOKEN_MUL = 'MUL'
+TOKEN_LPAREN = 'LPAREN'
+TOKEN_RPAREN = 'RPAREN'
+TOKEN_EOF = 'EOF'
+
+# Token specification
+token_specification = [
+    (TOKEN_ID, r'id'),
+    (TOKEN_PLUS, r'\+'),
+    (TOKEN_MUL, r'\*'),
+    (TOKEN_LPAREN, r'\('),
+    (TOKEN_RPAREN, r'\)'),
+    (TOKEN_EOF, r'$')
+]
+
+# Tokenizer
+def tokenize(input_string):
+    tokens = []
+    for token_type, pattern in token_specification:
+        regex = re.compile(pattern)
+        match = regex.match(input_string)
+        if match:
+            tokens.append((token_type, match.group(0)))
+            input_string = input_string[match.end():]
+            if not input_string:
+                tokens.append((TOKEN_EOF, ''))
+                break
+    return tokens
+
+# Parser
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.pos = 0
+
+    def lookahead(self):
+        if self.pos < len(self.tokens):
+            return self.tokens[self.pos][0]
+        else:
+            return TOKEN_EOF
+
+    def consume(self, token_type):
+        if self.lookahead() == token_type:
+            self.pos += 1
+        else:
+            raise SyntaxError(f'Expected {token_type} but found {self.lookahead()}')
+
+    def parse_E(self):
+        if self.lookahead() == TOKEN_ID or self.lookahead() == TOKEN_LPAREN:
+            self.parse_T()
+            self.parse_E_prime()
+        else:
+            raise SyntaxError(f'Unexpected token {self.lookahead()}')
+
+    def parse_E_prime(self):
+        if self.lookahead() == TOKEN_PLUS:
+            self.consume(TOKEN_PLUS)
+            self.parse_T()
+            self.parse_E_prime()
+
+    def parse_T(self):
+        if self.lookahead() == TOKEN_ID or self.lookahead() == TOKEN_LPAREN:
+            self.parse_F()
+            self.parse_T_prime()
+        else:
+            raise SyntaxError(f'Unexpected token {self.lookahead()}')
+
+    def parse_T_prime(self):
+        if self.lookahead() == TOKEN_MUL:
+            self.consume(TOKEN_MUL)
+            self.parse_F()
+            self.parse_T_prime()
+
+    def parse_F(self):
+        if self.lookahead() == TOKEN_ID:
+            self.consume(TOKEN_ID)
+        elif self.lookahead() == TOKEN_LPAREN:
+            self.consume(TOKEN_LPAREN)
+            self.parse_E()
+            self.consume(TOKEN_RPAREN)
+        else:
+            raise SyntaxError(f'Unexpected token {self.lookahead()}')
+
+    def parse(self):
+        self.parse_E()
+        if self.lookahead() != TOKEN_EOF:
+            raise SyntaxError('Unexpected input after end of expression')
+
+def main():
+    input_strings = [
+        "id + id * id",
+        "( id ) + id",
+        "id * ( id + id )",
+        "( id + id ) * id",
+        "id + id + id"
+    ]
+
+    for input_string in input_strings:
+        tokens = tokenize(input_string)
+        parser = Parser(tokens)
+        try:
+            parser.parse()
+            print(f'Successfully parsed: {input_string}')
+        except SyntaxError as e:
+            print(f'Failed to parse: {input_string}')
+            print(f'Error: {e}')
+
+if __name__ == "__main__":
+    main()
