@@ -1,0 +1,47 @@
+import nltk
+from nltk.corpus import wordnet as wn
+from nltk.tokenize import word_tokenize
+
+# Make sure the necessary NLTK data is downloaded
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+nltk.download('punkt')
+
+def lesk_algorithm(context_sentence, ambiguous_word):
+    max_overlap = 0
+    best_sense = None
+    
+    # Tokenize the context sentence
+    context = set(word_tokenize(context_sentence))
+    
+    # Iterate over each sense of the ambiguous word
+    for sense in wn.synsets(ambiguous_word):
+        # Get the definition (gloss) of the sense and tokenize it
+        signature = set(word_tokenize(sense.definition()))
+        
+        # Also consider the examples (usage sentences) of the sense
+        for example in sense.examples():
+            signature = signature.union(word_tokenize(example))
+        
+        # Calculate the overlap between the context and the signature
+        overlap = len(context.intersection(signature))
+        
+        # If this sense has the largest overlap, update the best sense
+        if overlap > max_overlap:
+            max_overlap = overlap
+            best_sense = sense
+    
+    return best_sense
+
+# Example usage
+context_sentence = "I went to the bank to deposit some money."
+ambiguous_word = "bank"
+
+# Get the best sense of the ambiguous word
+best_sense = lesk_algorithm(context_sentence, ambiguous_word)
+
+if best_sense:
+    print(f"Best sense: {best_sense.name()}")
+    print(f"Definition: {best_sense.definition()}")
+else:
+    print("No sense found.")
