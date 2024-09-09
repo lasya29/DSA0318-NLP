@@ -1,0 +1,113 @@
+import re
+from collections import defaultdict
+
+# Token specification
+token_specification = [
+    ('DET', r'\b(the|a|my|his)\b'),
+    ('NOUN', r'\b(dog|cat|telescope|man|woman)\b'),
+    ('VERB', r'\b(sees|see|like|likes)\b'),
+    ('PREP', r'\b(in|on|with)\b'),
+    ('ID', r'\bid\b'),
+    ('SPACE', r'\s+'),
+    ('ERROR', r'.')
+]
+
+def tokenize(sentence):
+    tokens = []
+    while sentence:
+        matched = False
+        for token_type, pattern in token_specification:
+            regex = re.compile(pattern)
+            match = regex.match(sentence)
+            if match:
+                tokens.append((token_type, match.group(0)))
+                sentence = sentence[match.end():]
+                matched = True
+                break
+        if not matched:
+            raise ValueError(f"Unexpected character: {sentence[0]}")
+    return tokens
+
+# Define the grammar rules
+class Grammar:
+    def __init__(self, rules):
+        self.rules = rules
+
+    def parse(self, tokens):
+        self.tokens = tokens
+        self.pos = 0
+        self.tree = []
+        self.parse_sentence()
+        return self.tree
+
+    def parse_sentence(self):
+        self.tree.append(self.parse_np())
+        self.tree.append(self.parse_vp())
+
+    def parse_np(self):
+        if self.tokens[self.pos][0] == 'DET':
+            det = self.tokens[self.pos][1]
+            self.pos += 1
+            n = self.tokens[self.pos][1]
+            self.pos += 1
+            return ('NP', det, n)
+        elif self.tokens[self.pos][0] == 'NOUN':
+            n = self.tokens[self.pos][1]
+            self.pos += 1
+            return ('NP', n)
+        else:
+            raise ValueError(f"Unexpected token: {self.tokens[self.pos]}")
+
+    def parse_vp(self):
+        v = self.tokens[self.pos][1]
+        self.pos += 1
+        np = self.parse_np()
+        return ('VP', v, np)
+
+def check_agreement(tree):
+    for i in range(len(tree)):
+        if tree[i][0] == 'NP':
+            subject = tree[i]
+            for j in range(i + 1, len(tree)):
+                if tree[j][0] == 'VP':
+                    verb = tree[j][1]
+                    if subject[1] in ['man', 'woman']:
+                        if verb in ['sees', 'likes']:
+                            print(f"Subject '{subject[1]}' and verb '{verb}' agree.")
+                        else:
+                            print(f"Subject '{subject[1]}' and verb '{verb}' do not agree.")
+                    else:
+                        if verb in ['see', 'like']:
+                            print(f"Subject '{subject[1]}' and verb '{verb}' agree.")
+                        else:
+                            print(f"Subject '{subject[1]}' and verb '{verb}' do not agree.")
+
+def main():
+    sentences = [
+        "the dog sees the cat",
+        "a woman likes the man",
+        "the cat see a dog",
+        "my dog likes the cat",
+        "a man see the dog"
+    ]
+
+    for sentence in sentences:
+        print(f"Sentence: {sentence}")
+        tokens = tokenize(sentence)
+        print(f"Tokens: {tokens}")
+
+        rules = {
+            'S': [['NP', 'VP']],
+            'NP': [['DET', 'NOUN'], ['NOUN']],
+            'VP': [['VERB', 'NP']],
+        }
+
+        grammar = Grammar(rules)
+        tree = grammar.parse(tokens)
+        print(f"Parse Tree: {tree}")
+
+        check_agreement(tree)
+        print()
+
+if __name__ == "__main__":
+    main()
