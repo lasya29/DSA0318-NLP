@@ -1,32 +1,31 @@
-import nltk
 from nltk.corpus import wordnet as wn
 from nltk.tokenize import word_tokenize
 
-# Make sure the necessary NLTK data is downloaded
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-nltk.download('punkt')
-
 def lesk_algorithm(context_sentence, ambiguous_word):
-    max_overlap = 0
-    best_sense = None
-    
     # Tokenize the context sentence
     context = set(word_tokenize(context_sentence))
     
-    # Iterate over each sense of the ambiguous word
-    for sense in wn.synsets(ambiguous_word):
-        # Get the definition (gloss) of the sense and tokenize it
-        signature = set(word_tokenize(sense.definition()))
+    # Get all synsets (senses) for the ambiguous word
+    synsets = wn.synsets(ambiguous_word)
+    
+    if not synsets:
+        return None  # If no synsets are found, return None
+    
+    max_overlap = 0
+    best_sense = synsets[0]  # Default to the first sense
+    
+    for sense in synsets:
+        # Get the gloss (definition) and example sentences for the sense
+        sense_definition = sense.definition()
+        sense_examples = ' '.join(sense.examples())
         
-        # Also consider the examples (usage sentences) of the sense
-        for example in sense.examples():
-            signature = signature.union(word_tokenize(example))
+        # Tokenize the sense definition and examples
+        sense_tokens = set(word_tokenize(sense_definition + ' ' + sense_examples))
         
-        # Calculate the overlap between the context and the signature
-        overlap = len(context.intersection(signature))
+        # Compute the overlap between the context and the sense tokens
+        overlap = len(context.intersection(sense_tokens))
         
-        # If this sense has the largest overlap, update the best sense
+        # Choose the sense with the highest overlap
         if overlap > max_overlap:
             max_overlap = overlap
             best_sense = sense
@@ -34,14 +33,12 @@ def lesk_algorithm(context_sentence, ambiguous_word):
     return best_sense
 
 # Example usage
-context_sentence = "I went to the bank to deposit some money."
+sentence = "I went to the bank to deposit money."
 ambiguous_word = "bank"
 
-# Get the best sense of the ambiguous word
-best_sense = lesk_algorithm(context_sentence, ambiguous_word)
-
-if best_sense:
-    print(f"Best sense: {best_sense.name()}")
-    print(f"Definition: {best_sense.definition()}")
+sense = lesk_algorithm(sentence, ambiguous_word)
+if sense:
+    print(f"Best sense for '{ambiguous_word}': {sense.name()}")
+    print(f"Definition: {sense.definition()}")
 else:
-    print("No sense found.")
+    print(f"No senses found for '{ambiguous_word}'")
