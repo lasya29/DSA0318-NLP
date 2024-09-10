@@ -1,48 +1,44 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-# Define a collection of documents
+# Sample documents (corpus)
 documents = [
-    "The quick brown fox jumps over the lazy dog.",
-    "Never jump over the lazy dog quickly.",
-    "A fox is a wild animal.",
-    "The dog is a domesticated animal.",
-    "Foxes are wild animals and dogs are domestic animals."
+    "The sky is blue.",
+    "The sun is bright today.",
+    "The sun in the sky is bright.",
+    "We can see the shining sun, the bright sun."
 ]
 
-# Step 1: Create a TF-IDF Vectorizer
+# Create a TF-IDF Vectorizer
 vectorizer = TfidfVectorizer()
 
-# Step 2: Fit the vectorizer on the documents and transform them into TF-IDF matrix
+# Generate the TF-IDF vectors for the documents
 tfidf_matrix = vectorizer.fit_transform(documents)
 
-# Display the feature names (terms)
-print("Terms:", vectorizer.get_feature_names_out())
-
-# Convert the TF-IDF matrix to a dense format and display it
-tfidf_dense = tfidf_matrix.todense()
-print("\nTF-IDF Matrix:\n", tfidf_dense)
-
-# Step 3: Function to rank documents based on a query
-def rank_documents(query, tfidf_matrix, vectorizer):
-    # Transform the query to the same TF-IDF space
-    query_vec = vectorizer.transform([query])
+# Function to rank documents based on a query
+def rank_documents(query, documents):
+    # Transform the query into a TF-IDF vector
+    query_vector = vectorizer.transform([query])
     
-    # Compute cosine similarity between query and each document
-    cosine_similarities = (tfidf_matrix @ query_vec.T).toarray().flatten()
+    # Compute cosine similarity between the query and all documents
+    cosine_similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
     
-    # Rank the documents in descending order of similarity
-    ranked_doc_indices = np.argsort(-cosine_similarities)
+    # Rank the documents based on similarity scores
+    ranked_indices = np.argsort(-cosine_similarities)  # Sort in descending order
     
-    return ranked_doc_indices, cosine_similarities
+    # Return the ranked documents with their similarity scores
+    ranked_documents = [(documents[i], cosine_similarities[i]) for i in ranked_indices]
+    
+    return ranked_documents
 
 # Example query
-query = "wild fox"
+query = "bright sun"
 
-# Rank the documents for the given query
-ranked_indices, similarities = rank_documents(query, tfidf_matrix, vectorizer)
+# Rank the documents based on the query
+ranked_docs = rank_documents(query, documents)
 
-# Display the ranked documents and their scores
-print("\nRanked Documents for Query '{}':".format(query))
-for idx in ranked_indices:
-    print(f"Document {idx+1}: {documents[idx]} (Score: {similarities[idx]:.4f})")
+# Print the ranked documents and their similarity scores
+print("Ranked Documents:")
+for doc, score in ranked_docs:
+    print(f"Document: '{doc}', Similarity Score: {score:.4f}")
