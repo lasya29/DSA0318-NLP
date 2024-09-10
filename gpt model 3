@@ -1,30 +1,14 @@
-import openai
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-# Replace 'your-api-key' with your actual OpenAI API key
-openai.api_key = "your-api-key"
+model_name = "distilgpt2"
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+model = GPT2LMHeadModel.from_pretrained(model_name)
 
-def generate_text(prompt, model="text-davinci-003", max_tokens=100):
-    try:
-        # Make a request to the OpenAI API to generate text
-        response = openai.Completion.create(
-            model=model,
-            prompt=prompt,
-            max_tokens=max_tokens,
-            n=1, # Number of completions to generate
-            stop=None, # Optionally, you can specify a stopping condition
-            temperature=0.7 # Controls randomness (0.0 - deterministic, 1.0 - more creative)
-        )
+prompt_text = "Once upon a time,"
 
-        # Extract the generated text from the response
-        generated_text = response.choices[0].text.strip()
-        return generated_text
+input_ids = tokenizer.encode(prompt_text, return_tensors='pt')
 
-    except Exception as e:
-        print(f"Error generating text: {e}")
-        return None
+output = model.generate(input_ids, max_length=100, num_return_sequences=1, temperature=0.7)
 
-# Example usage
-prompt = "Write a short story about a robot who learns to love."
-generated_text = generate_text(prompt)
-print("Generated Text:")
-print(generated_text)
+generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
+print("Generated Text:\n", generated_text)
