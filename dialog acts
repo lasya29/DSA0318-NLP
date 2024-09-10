@@ -1,41 +1,36 @@
 import spacy
-
-# Load spaCy's English model
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 nlp = spacy.load('en_core_web_sm')
-
-# Define simple rules for recognizing dialog acts
-def recognize_dialog_act(utterance):
-    doc = nlp(utterance.lower())
-    if any(token.text in ['hi', 'hello', 'hey'] for token in doc):
-        return 'Greeting'
-    elif doc[-1].text == '?' or any(token.tag_ == 'WP' for token in doc):
-        return 'Question'
-    elif any(token.text in ['please', 'could', 'would', 'can'] for token in doc):
-        return 'Request'
-    elif any(token.dep_ == 'neg' for token in doc):
-        return 'Negation'
-    elif any(token.text in ['thanks', 'thank you'] for token in doc):
-        return 'Thanking'
-    else:
-        return 'Statement'
-
-# Function to analyze a conversation and recognize dialog acts
-def analyze_conversation(conversation):
-    print("Recognized Dialog Acts:")
-    for utterance in conversation:
-        dialog_act = recognize_dialog_act(utterance)
-        print(f"'{utterance}': {dialog_act}")
-
-# Example conversation
-conversation = [
-    "Hi, how are you?",
-    "I am fine, thank you.",
-    "Can you help me with my homework?",
-    "Sure, what do you need help with?",
-    "I need help with math.",
-    "Okay, let's start with the basics.",
-    "Thanks a lot!",
-    "You're welcome."
+dialogs = [
+    ("Can you tell me the time?", "question"),
+    ("I need to schedule a meeting.", "request"),
+    ("Please turn off the lights.", "command"),
+    ("I am going to the store.", "statement"),
+    ("How are you doing today?", "question"),
+    ("Let's have lunch tomorrow.", "request"),
+    ("Close the door, please.", "command"),
+    ("I like to read books.", "statement"),
 ]
+texts, labels = zip(*dialogs)
+pipeline = Pipeline([
+    ('vectorizer', CountVectorizer()), 
+    ('classifier', MultinomialNB())      
+])
+X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=42)
 
-analyze_conversation(conversation)
+pipeline.fit(X_train, y_train)
+def predict_dialog_act(text):
+    return pipeline.predict([text])[0]
+test_texts = [
+    "Can you help me with this task?",
+    "I would like to book a flight.",
+    "Turn up the volume.",
+    "The weather is nice today.",
+]
+for text in test_texts:
+    print(f"Text: {text}")
+    print(f"Predicted Dialog Act: {predict_dialog_act(text)}")
+    print()
