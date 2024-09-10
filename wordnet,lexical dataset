@@ -1,19 +1,20 @@
+import nltk
 from nltk.corpus import wordnet
 
-def get_word_meanings(word):
+def explore_word_meanings(word):
+    
     synsets = wordnet.synsets(word)
-    
+
     if not synsets:
-        print(f"No meanings found for '{word}'")
+        print(f"No synsets found for the word '{word}'.")
         return
-    
-    print(f"Meanings for '{word}':")
+
     for synset in synsets:
-        print(f"- {synset.definition()}")
+        print(f"Synset: {synset.name()}")
+        print(f"Definition: {synset.definition()}")
+        print(f"Examples: {synset.examples()}")
+        print()
 
-if __name__ == "__main__":
-    # Example words to explore
-    words = ["car", "run", "bank", "python"]
+example_word = "dog"
 
-    for word in words:
-        get_word_meanings(word)
+explore_word_meanings(example_word)
