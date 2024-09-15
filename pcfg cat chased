@@ -1,0 +1,29 @@
+import nltk
+from nltk import CFG
+from nltk.parse import ViterbiParser
+
+# Define the FCFG with probabilities
+fcfg_grammar = """
+    S -> NP VP [0.6]
+    NP -> Det N [0.3] | NP PP [0.2]
+    VP -> V NP [0.5] | VP PP [0.4]
+    PP -> P NP [0.7]
+    Det -> 'The' [1.0]  # Assuming 'The' is the only determiner
+    N -> 'cat' [0.5] | 'mouse' [0.5]  # Adjust probabilities as needed
+    V -> 'chased' [1.0]  # Assuming 'chased' is the only verb
+    P -> 'the' [1.0]  # Adjust to include other prepositions if needed
+"""
+
+# Create an FCFG grammar object
+grammar = CFG.fromstring(fcfg_grammar)
+
+# Initialize the Viterbi parser with the grammar
+parser = ViterbiParser(grammar)
+
+# Define the input sentence (tokenized)
+sentence = "The cat chased the mouse".split()
+
+# Parse the sentence and display the most probable parse
+for tree in parser.parse(sentence):
+    print(tree)
+    tree.pretty_print()
