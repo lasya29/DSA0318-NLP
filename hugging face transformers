@@ -1,0 +1,31 @@
+from transformers import MarianMTModel, MarianTokenizer
+
+# Load the pre-trained model and tokenizer
+model_name = 'Helsinki-NLP/opus-mt-en-de'
+tokenizer = MarianTokenizer.from_pretrained(model_name)
+model = MarianMTModel.from_pretrained(model_name)
+
+def translate_to_german(text):
+    # Tokenize the input text
+    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+
+    # Perform translation
+    translated = model.generate(**inputs)
+
+    # Decode the translated text
+    translated_text = tokenizer.decode(translated[0], skip_special_tokens=True)
+
+    return translated_text
+
+# Example sentences
+sentences = [
+    "Hello, how are you?",
+    "I love programming in Python.",
+    "Machine translation is fascinating."
+]
+
+# Translate each sentence to German
+for sentence in sentences:
+    translation = translate_to_german(sentence)
+    print(f"Original: {sentence}")
+    print(f"Translated: {translation}\n")
