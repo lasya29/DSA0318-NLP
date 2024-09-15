@@ -1,0 +1,29 @@
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk import pos_tag
+
+# Download necessary NLTK data (if not already downloaded)
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+# Define the sentences
+sentences = [
+    "The sun is shining brightly",
+    "I love reading interesting books"
+]
+
+def pos_tagging(sentence):
+    # Tokenize the sentence
+    tokens = word_tokenize(sentence)
+    # Perform POS tagging
+    tagged = pos_tag(tokens)
+    return tagged
+
+# Process each sentence
+for sentence in sentences:
+    print(f"Sentence: {sentence}")
+    tagged = pos_tagging(sentence)
+    print("POS Tags:")
+    for word, tag in tagged:
+        print(f"{word}: {tag}")
+    print()
