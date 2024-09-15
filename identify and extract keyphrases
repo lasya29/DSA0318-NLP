@@ -1,0 +1,48 @@
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+
+# The input sentences
+sentences = [
+    "Artificial intelligence (AI) is a field of computer science.",
+    "Machine learning is a subset of AI that focuses on training models to make predictions.",
+    "Deep learning is a type of machine learning that uses neural networks with multiple layers.",
+    "Neural networks are composed of interconnected nodes called neurons.",
+    "Recurrent neural networks (RNNs) are commonly used in natural language processing tasks."
+]
+
+# Initialize the TF-IDF Vectorizer
+tfidf_vectorizer = TfidfVectorizer(stop_words='english')
+
+# Apply the vectorizer on the given sentences
+tfidf_matrix = tfidf_vectorizer.fit_transform(sentences)
+
+# Extract the feature names (keywords)
+feature_names = tfidf_vectorizer.get_feature_names_out()
+
+# Convert the TF-IDF matrix to a dense format and create a DataFrame
+tfidf_dense = tfidf_matrix.todense()
+df = pd.DataFrame(tfidf_dense, columns=feature_names)
+
+# Display the DataFrame of TF-IDF scores
+print("TF-IDF Matrix:")
+print(df)
+
+# Identify and extract key phrases with highest TF-IDF scores
+def extract_keywords(tfidf_matrix, feature_names, top_n=3):
+    keywords_per_sentence = []
+    for row in tfidf_matrix:
+        # Get the indices of the top_n highest TF-IDF scores
+        top_indices = row.argsort()[::-1][:top_n]
+        # Get the corresponding feature names (keywords)
+        keywords = [feature_names[i] for i in top_indices]
+        keywords_per_sentence.append(keywords)
+    return keywords_per_sentence
+
+# Extract top 3 keywords per sentence
+top_n = 3  # Top 3 keywords per sentence
+keywords = extract_keywords(tfidf_matrix.toarray(), feature_names, top_n)
+
+# Print keywords for each sentence
+print("\nKeywords per sentence:")
+for i, kw in enumerate(keywords, 1):
+    print(f"Sentence {i}: {', '.join(kw)}")
