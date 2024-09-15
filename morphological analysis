@@ -1,0 +1,42 @@
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('wordnet')
+
+# Define the sentence
+sentence = "Unhappily, she ran quickly"
+
+# Tokenize the sentence into words
+words = word_tokenize(sentence)
+
+# Initialize the stemmer and lemmatizer
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+def get_wordnet_pos(treebank_tag):
+    """Convert Treebank tags to WordNet tags"""
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    elif treebank_tag.startswith('V'):
+        return wordnet.VERB
+    elif treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    elif treebank_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return None
+
+# Part-of-speech tagging
+pos_tags = nltk.pos_tag(words)
+
+# Perform stemming and lemmatization
+print("Original\tStemmed\tLemmatized")
+for word, pos in pos_tags:
+    stemmed_word = stemmer.stem(word)
+    lemmatized_word = lemmatizer.lemmatize(word, pos=get_wordnet_pos(pos) or wordnet.NOUN)
+    print(f"{word}\t\t{stemmed_word}\t{lemmatized_word}")
