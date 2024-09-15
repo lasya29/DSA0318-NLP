@@ -1,0 +1,42 @@
+def fsa_equal_zeros_ones(input_string):
+    """
+    This function simulates a finite state automaton (FSA) that accepts strings 
+    containing an equal number of '0's and '1's.
+    
+    :param input_string: The input string composed of '0's and '1's
+    :return: True if the string is accepted (equal number of '0's and '1's), False otherwise
+    """
+    # Counter to track the difference between '0's and '1's
+    count = 0
+    
+    # Process each character in the input string
+    for char in input_string:
+        if char == '0':
+            count += 1
+        elif char == '1':
+            count -= 1
+        else:
+            # Invalid character, reject the string
+            return False
+        
+        # If at any point count is negative, there are more '1's than '0's
+        if count < 0:
+            return False
+
+    # If count is zero at the end, the string is accepted
+    return count == 0
+
+# Test the FSA with different strings
+test_strings = [
+    "0011",    # Equal number of 0's and 1's -> Accepted
+    "010101",  # Equal number of 0's and 1's -> Accepted
+    "000111",  # Equal number of 0's and 1's -> Accepted
+    "001",     # Unequal -> Rejected
+    "1010",    # Unequal -> Rejected
+    "1110",    # Unequal -> Rejected
+]
+
+# Run the test cases
+for s in test_strings:
+    result = fsa_equal_zeros_ones(s)
+    print(f"String '{s}' is accepted: {result}")
