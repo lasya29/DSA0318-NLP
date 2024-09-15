@@ -1,0 +1,29 @@
+import nltk
+from nltk import CFG
+from nltk.parse import ViterbiParser
+
+# Define the PCFG
+pcfg_grammar = """
+    S -> NP VP [1.0]
+    NP -> Det N [0.5] | NP PP [0.4] | 'the' [0.1]
+    VP -> V NP [0.7] | VP PP [0.3]
+    PP -> P NP [1.0]
+    Det -> 'the' [0.7] | 'a' [0.3]
+    N -> 'fox' [0.4] | 'dog' [0.3] | 'cat' [0.2] | 'bird' [0.1]
+    V -> 'jumps' [0.5] | 'runs' [0.3] | 'sits' [0.2]
+    P -> 'over' [0.6] | 'on' [0.4]
+"""
+
+# Create a PCFG grammar object
+grammar = CFG.fromstring(pcfg_grammar)
+
+# Initialize a Viterbi parser with the grammar
+parser = ViterbiParser(grammar)
+
+# Define the input sentence (tokenized)
+sentence = "The quick brown fox jumps over the lazy dog.".split()
+
+# Parse the sentence and display the most probable parse
+for tree in parser.parse(sentence):
+    print(tree)
+    tree.pretty_print()
