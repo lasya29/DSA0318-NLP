@@ -1,0 +1,30 @@
+import nltk
+from nltk import word_tokenize, pos_tag, ne_chunk
+
+def extract_named_entities(text):
+    # Tokenize the text
+    words = word_tokenize(text)
+    
+    # Perform part-of-speech tagging
+    pos_tags = pos_tag(words)
+    
+    # Perform Named Entity Recognition (NER) using a chunker
+    named_entities_tree = ne_chunk(pos_tags)
+    
+    named_entities = []
+    
+    # Extract named entities from the tree
+    for chunk in named_entities_tree:
+        if hasattr(chunk, 'label'):  # Check if it's a named entity
+            entity = " ".join(c[0] for c in chunk)
+            entity_type = chunk.label()
+            named_entities.append((entity, entity_type))
+    
+    return named_entities
+
+# Example text
+text = "Harvard University, located in Cambridge, Massachusetts, is a prestigious institution."
+
+# Extract named entities
+entities = extract_named_entities(text)
+print("Named Entities:", entities)
