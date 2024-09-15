@@ -1,0 +1,16 @@
+import re
+
+# Define the text
+text = "Regular expressions are a powerful tool for pattern matching in text. They provide a flexible way to search and manipulate strings."
+
+# Define the regex pattern
+pattern = r"powerful|flexible|manipulate"
+
+# Find all matches in the text
+matches = re.findall(pattern, text)
+
+# Print the original text and matches
+print("Original Text:")
+print(text)
+print("\nMatches Found:")
+print(matches)
