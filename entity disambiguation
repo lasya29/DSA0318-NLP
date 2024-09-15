@@ -1,0 +1,55 @@
+# Install wikipedia-api if you don't have it installed already:
+# pip install wikipedia-api spacy
+
+import spacy
+import wikipediaapi
+
+# Load SpaCy's small English model
+nlp = spacy.load("en_core_web_sm")
+
+# Initialize Wikipedia API
+wiki_wiki = wikipediaapi.Wikipedia('en')
+
+def get_wikipedia_summary(title):
+    """Fetch the summary of the given Wikipedia title."""
+    page = wiki_wiki.page(title)
+    if page.exists():
+        return page.summary[:500]  # Limit summary for readability
+    else:
+        return "No Wikipedia page found."
+
+def disambiguate_entity(entity):
+    """Attempt to resolve the entity mention to its Wikipedia entry."""
+    # Query Wikipedia for the entity
+    page = wiki_wiki.page(entity)
+    
+    # Check if a page exists for the entity
+    if page.exists():
+        print(f"Entity: {entity}")
+        print(f"Wikipedia Page: {page.title}")
+        print(f"Summary: {page.summary[:500]}")
+    else:
+        print(f"Entity: {entity}")
+        print(f"No Wikipedia page found for {entity}.\n")
+
+def process_sentence(sentence):
+    """Process the sentence and resolve entity mentions."""
+    # Apply NER on the sentence
+    doc = nlp(sentence)
+    
+    # Disambiguate each identified entity
+    for ent in doc.ents:
+        disambiguate_entity(ent.text)
+
+# Input sentences
+sentences = [
+    "Apple is a leading tech company.",
+    "I love apples as a fruit.",
+    "Python is a popular programming language.",
+    "The python is a non-venomous snake."
+]
+
+# Process each sentence
+for sentence in sentences:
+    print(f"\nProcessing: \"{sentence}\"")
+    process_sentence(sentence)
